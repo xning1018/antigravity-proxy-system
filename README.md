@@ -1,23 +1,22 @@
-<p align="center">
-  <img src="img/antigravity_logo.png" alt="Antigravity Logo" width="120"/>
-</p>
-
-<h1 align="center">Antigravity-Proxy</h1>
+<h1 align="center">Antigravity-Proxy（系统代理自动跟随增强版）</h1>
 
 <p align="center">
-  <b>🚀 让 Antigravity 不开 TUN 模式也能稳定走代理</b>
+  <b>🚀 不开 TUN 模式，仅开 Windows 系统代理即可稳定使用 Antigravity（自动跟随代理端口与开关）</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/yuaotian/antigravity-proxy/actions"><img src="https://github.com/yuaotian/antigravity-proxy/actions/workflows/build.yml/badge.svg" alt="Build Status"/></a>
   <a href="LICENSE.txt"><img src="https://img.shields.io/badge/license-BSD--2--Clause-blue.svg" alt="License"/></a>
-  <img src="https://img.shields.io/badge/platform-Windows%20x86%20%7C%20x64-lightgrey.svg" alt="Platform"/>
+  <img src="https://img.shields.io/badge/platform-Windows%20x64-lightgrey.svg" alt="Platform"/>
+  <a href="README_SYSTEM_PROXY.md"><img src="https://img.shields.io/badge/guide-%E4%B8%AD%E6%96%87%E5%A2%9E%E5%BC%BA%E8%AF%B4%E6%98%8E-green.svg" alt="System Proxy Guide"/></a>
 </p>
 
-<p align="center">
-  <a href="README_EN.md">🇬🇧 English</a> |
-  <a href="README_RU.md">🇷🇺 Русский</a>
-</p>
+> [!TIP]
+> **本仓库基于开源项目 [yuaotian/antigravity-proxy](https://github.com/yuaotian/antigravity-proxy)（v2.6.4）改进**：
+> - **自动跟随 Windows 系统代理（`proxy.mode = "system"`）**：无需在 `config.json` 手动写死端口（如 `7890` / `7897`），自动读取系统代理配置并每 2 秒热同步开关状态；
+> - **混合端口协议自动探测**：自动识别本机代理端口是否支持 `SOCKS5` 或 `HTTP CONNECT`；
+> - **开箱即用**：普通用户可直接前往右侧 [**Releases**](../../releases) 下载打包好的 `.zip`，解压后退出 Antigravity 并双击 **`一键部署或修复系统代理补丁.bat`** 即可完成部署。
+>
+> 完整改进原理、编译方法与维护说明请查看 👉 **[README_SYSTEM_PROXY.md](README_SYSTEM_PROXY.md)**
 
 ---
 
