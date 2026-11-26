@@ -71,11 +71,10 @@ else()
   set(SOURCES_HDE "src/hde/hde32.c")
 endif()
 
-# Proxy Sources
-set(SOURCES_PROXY
+# Proxy Sources (核心共享模块，不含入口转发层)
+set(SOURCES_PROXY_CORE
   "src/main.cpp"
   "src/hooks/Hooks.cpp"
-  "src/proxy/VersionProxy.cpp"
   "src/update/UpdateChecker.cpp"
   "src/ide/IdeExtensionPrompt.cpp"
 )
@@ -89,7 +88,14 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 # Build antigravity-proxy DLL (输出名为 version.dll)
-add_library(version SHARED ${SOURCES_MINHOOK} ${SOURCES_HDE} ${SOURCES_PROXY} ${RESOURCES})
+add_library(version SHARED
+  ${SOURCES_MINHOOK}
+  ${SOURCES_HDE}
+  ${SOURCES_PROXY_CORE}
+  "src/proxy/VersionProxy.cpp"
+  "dll_resources/version_proxy.rc"
+  ${RESOURCES}
+)
 
 # 设置模块定义文件 (导出 version.dll 函数)
 if(MSVC)
@@ -117,12 +123,26 @@ if(NOT MSVC AND STATIC_RUNTIME)
   target_link_options(version PRIVATE -static-libstdc++ -static-libgcc)
 endif()
 
-# Build Antigravity CLI shim (输出名为 dbghelp.dll)
+# Build Antigravity CLI single-file DLL (输出名为 dbghelp.dll，直接内嵌代理主体与转发)
 add_library(dbghelp SHARED
-  "src/proxy/DbgHelpShim.cpp"
+  ${SOURCES_MINHOOK}
+  ${SOURCES_HDE}
+  ${SOURCES_PROXY_CORE}
+  "src/proxy/DbgHelpProxy.cpp"
+  "dll_resources/dbghelp_proxy.rc"
 )
+target_compile_definitions(dbghelp PRIVATE ANTIGRAVITY_PROXY_DBGHELP)
+target_include_directories(dbghelp PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+  $<INSTALL_INTERFACE:include>
+)
+target_include_directories(dbghelp PRIVATE "src/" "src/hde/")
+target_link_libraries(dbghelp PRIVATE ws2_32 winhttp advapi32)
+if(NOT MSVC AND STATIC_RUNTIME)
+  target_link_options(dbghelp PRIVATE -static-libstdc++ -static-libgcc)
+endif()
 
-# CLI shim 通过定义文件导出常用 DbgHelp API，内部再延迟转发到系统 DLL。
+# CLI 通过定义文件导出常用 DbgHelp API，内部延迟转发到系统 DLL。
 if(MSVC)
   set_target_properties(dbghelp PROPERTIES
     LINK_FLAGS "/DEF:\"${CMAKE_CURRENT_SOURCE_DIR}/src/proxy/dbghelp.def\""
@@ -132,15 +152,6 @@ else()
     "-Wl,${CMAKE_CURRENT_SOURCE_DIR}/src/proxy/dbghelp.def"
   )
 endif()
-
-# CLI 使用唯一文件名加载代理主体，避免与已加载的系统 version.dll 同名冲突。
-add_dependencies(dbghelp version)
-add_custom_command(TARGET dbghelp POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          $<TARGET_FILE:version>
-          $<TARGET_FILE_DIR:dbghelp>/antigravity_proxy.dll
-  COMMENT "复制 Antigravity CLI 代理主体"
-)
 
 if(WIN32)
   set_target_properties(version PROPERTIES PREFIX "")

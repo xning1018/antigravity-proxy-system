@@ -24,6 +24,8 @@ function Sync-BackupMotherCopy {
         $dstDist = Join-Path $BackupRoot "dist"
         New-Item -ItemType Directory -Path (Join-Path $dstDist "ide") -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $dstDist "cli") -Force | Out-Null
+        $oldBakCliDll = Join-Path $dstDist "cli\antigravity_proxy.dll"
+        if (Test-Path -LiteralPath $oldBakCliDll) { Remove-Item -LiteralPath $oldBakCliDll -Force -ErrorAction SilentlyContinue }
         Copy-Item -Path (Join-Path $DistIde "*") -Destination (Join-Path $dstDist "ide") -Force -ErrorAction SilentlyContinue
         if (Test-Path -LiteralPath $DistCli -PathType Container) {
             Copy-Item -Path (Join-Path $DistCli "*") -Destination (Join-Path $dstDist "cli") -Force -ErrorAction SilentlyContinue
@@ -115,7 +117,17 @@ foreach ($t in $targets) {
 
     $srcDir = if ($t.Variant -eq "ide") { $DistIde } else { $DistCli }
     $altSrcDir = Join-Path $BackupRoot (Join-Path "dist" $t.Variant)
-    $dllFiles = if ($t.Variant -eq "ide") { @("version.dll") } else { @("dbghelp.dll", "antigravity_proxy.dll") }
+    $dllFiles = if ($t.Variant -eq "ide") { @("version.dll") } else { @("dbghelp.dll") }
+
+    if ($t.Variant -eq "cli") {
+        $legacyCliTarget = Join-Path $t.Dir "antigravity_proxy.dll"
+        if (Test-Path -LiteralPath $legacyCliTarget) {
+            try {
+                Remove-Item -LiteralPath $legacyCliTarget -Force
+                Write-Host "  [已清理] 旧版残留 antigravity_proxy.dll" -ForegroundColor DarkGray
+            } catch {}
+        }
+    }
 
     foreach ($fn in $dllFiles) {
         $src = Join-Path $srcDir $fn

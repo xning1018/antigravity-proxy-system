@@ -263,7 +263,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         // ============================================================================
         VersionProxy::Initialize();  // 空操作，保持接口兼容
         
+#ifdef ANTIGRAVITY_PROXY_DBGHELP
+        Core::Logger::Info("Antigravity-Proxy DLL 已加载 (模拟 dbghelp.dll，单文件直出模式)");
+#else
         Core::Logger::Info("Antigravity-Proxy DLL 已加载 (模拟 version.dll)");
+#endif
         Core::Logger::Info(IsOpenUrlProtocolLaunch()
             ? "启动类型：协议启动"
             : "启动类型：普通启动");

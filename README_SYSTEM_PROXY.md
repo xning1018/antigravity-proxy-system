@@ -16,7 +16,10 @@
 3. **运行期热同步 & 关代理直连兜底**
    - 统一通过 `Config::GetEffectiveProxy()` 为所有连接路径提供线程安全代理配置快照，每 2 秒轻量检查一次系统代理开关与端口变化。
    - 当你在代理软件中临时关闭系统代理时自动切回直连，并对已分配的 FakeIP 地址自动重解析真实 IP 后直连。
-4. **一键通用部署与防覆盖修复**
+4. **CLI 单文件直出 & 完整 PE 版本信息**
+   - 将 Antigravity CLI（`agy`）使用的 `dbghelp.dll` 合并为单文件直出（[DbgHelpProxy.cpp](src/proxy/DbgHelpProxy.cpp)），彻底移除双层 `LoadLibrary("antigravity_proxy.dll")` 加载壳，降低杀毒软件启发式误报风险。
+   - 为 `version.dll` 与 `dbghelp.dll` 嵌入标准的 Windows PE 版本信息资源（[version_proxy.rc](dll_resources/version_proxy.rc)、[dbghelp_proxy.rc](dll_resources/dbghelp_proxy.rc)）。
+5. **一键通用部署与防覆盖修复**
    - 提供 [build-mingw.ps1](build-mingw.ps1)（支持本机 MinGW `g++` 直接编译）与 [deploy.ps1](deploy.ps1) / [一键部署或修复系统代理补丁.bat](一键部署或修复系统代理补丁.bat)。
    - 首次部署时会自动在 `%LOCALAPPDATA%\antigravity-proxy-system` 同步一份母本；后续即使 Antigravity 自动更新清除了补丁，双击桌面或原目录的 `.bat` 即可一键补回。
 
