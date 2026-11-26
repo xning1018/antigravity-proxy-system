@@ -1,0 +1,275 @@
+{
+  "name": "antigravity-proxy",
+  "displayName": "Antigravity Proxy",
+  "description": "%description%",
+  "version": "0.0.0",
+  "publisher": "yuaotian",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuaotian/antigravity-proxy"
+  },
+  "homepage": "https://github.com/yuaotian/antigravity-proxy",
+  "bugs": {
+    "url": "https://github.com/yuaotian/antigravity-proxy/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "proxy",
+    "antigravity",
+    "socks5"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "icons": {
+      "agp-shield": {
+        "description": "Antigravity Proxy Shield Relay Icon",
+        "default": {
+          "fontPath": "./media/agp-icon.ttf",
+          "fontCharacter": "\\E001"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "antigravityProxy",
+          "title": "%view.containerTitle%",
+          "icon": "media/activity-icon.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "antigravityProxyLogs",
+          "title": "%view.logsContainerTitle%",
+          "icon": "media/activity-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "antigravityProxy": [
+        {
+          "id": "antigravityProxy.sidebar",
+          "type": "webview",
+          "name": "%view.statusTitle%"
+        }
+      ],
+      "antigravityProxyLogs": [
+        {
+          "id": "antigravityProxy.logs",
+          "type": "webview",
+          "name": "%view.logsTitle%"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "antigravityProxy.openSettings",
+          "when": "view == antigravityProxy.sidebar",
+          "group": "navigation@1"
+        },
+        {
+          "command": "antigravityProxy.scanProxy",
+          "when": "view == antigravityProxy.sidebar",
+          "group": "navigation@2"
+        },
+        {
+          "command": "antigravityProxy.testProxy",
+          "when": "view == antigravityProxy.sidebar",
+          "group": "navigation@3"
+        },
+        {
+          "command": "antigravityProxy.checkGemini",
+          "when": "view == antigravityProxy.sidebar",
+          "group": "navigation@4"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "antigravityProxy.openSettings",
+        "title": "%command.openSettings%",
+        "category": "Antigravity Proxy",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "antigravityProxy.scanProxy",
+        "title": "%command.scanProxy%",
+        "category": "Antigravity Proxy",
+        "icon": "$(search)"
+      },
+      {
+        "command": "antigravityProxy.testProxy",
+        "title": "%command.testProxy%",
+        "category": "Antigravity Proxy",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "antigravityProxy.repairPatch",
+        "title": "%command.repairPatch%",
+        "category": "Antigravity Proxy"
+      },
+      {
+        "command": "antigravityProxy.restartIde",
+        "title": "%command.restartIde%",
+        "category": "Antigravity Proxy"
+      },
+      {
+        "command": "antigravityProxy.openLogs",
+        "title": "%command.openLogs%",
+        "category": "Antigravity Proxy"
+      },
+      {
+        "command": "antigravityProxy.openLogsWindow",
+        "title": "%command.openLogsWindow%",
+        "category": "Antigravity Proxy",
+        "icon": "$(window)"
+      },
+      {
+        "command": "antigravityProxy.checkGemini",
+        "title": "%command.checkGemini%",
+        "category": "Antigravity Proxy",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "antigravityProxy.refreshIp",
+        "title": "%command.refreshIp%",
+        "category": "Antigravity Proxy",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "antigravityProxy.checkUpdate",
+        "title": "%command.checkUpdate%",
+        "category": "Antigravity Proxy",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "antigravityProxy.switchLanguage",
+        "title": "%command.switchLanguage%",
+        "category": "Antigravity Proxy",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "antigravityProxy.setupAcp",
+        "title": "%command.setupAcp%",
+        "category": "Antigravity Proxy",
+        "icon": "$(multiple-windows)"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Proxy",
+      "properties": {
+        "antigravityProxy.language": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "zh-cn",
+            "en",
+            "ru"
+          ],
+          "enumDescriptions": [
+            "%config.language.auto%",
+            "简体中文",
+            "English",
+            "Русский"
+          ],
+          "description": "%config.language%"
+        },
+        "antigravityProxy.patchGuard.autoRestore": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.autoRestore%"
+        },
+        "antigravityProxy.acp.detectOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.acpDetect%"
+        },
+        "antigravityProxy.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.statusBarEnabled%"
+        },
+        "antigravityProxy.statusBar.probeIntervalSeconds": {
+          "type": "number",
+          "default": 60,
+          "minimum": 0,
+          "description": "%config.probeInterval%"
+        },
+        "antigravityProxy.egress.refreshIntervalSeconds": {
+          "type": "number",
+          "default": 1800,
+          "minimum": 0,
+          "description": "%config.egressInterval%"
+        },
+        "antigravityProxy.gemini.intervalSeconds": {
+          "type": "number",
+          "default": 300,
+          "minimum": 0,
+          "description": "%config.geminiInterval%"
+        },
+        "antigravityProxy.update.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.updateEnabled%"
+        },
+        "antigravityProxy.update.mode": {
+          "type": "string",
+          "default": "notify",
+          "enum": [
+            "notify",
+            "auto"
+          ],
+          "enumDescriptions": [
+            "%config.updateMode.notify%",
+            "%config.updateMode.auto%"
+          ],
+          "description": "%config.updateMode%"
+        },
+        "antigravityProxy.update.intervalHours": {
+          "type": "number",
+          "default": 6,
+          "minimum": 1,
+          "description": "%config.updateInterval%"
+        },
+        "antigravityProxy.update.delaySeconds": {
+          "type": "number",
+          "default": 20,
+          "minimum": 0,
+          "description": "%config.updateDelay%"
+        },
+        "antigravityProxy.update.mirrors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "https://gh-proxy.com/",
+            "https://wget.la/"
+          ],
+          "description": "%config.updateMirrors%"
+        }
+      }
+    }
+  }
+}
