@@ -31,37 +31,6 @@ Antigravity-Proxy 是一个放进 Antigravity 安装目录即可生效的代理�
 - 支持在 **JetBrains / Zed / VS Code** 等编辑器里经 ACP 使用 Antigravity（`agy acp` 与 ACP Registry 的 `agy_acp_server`）时走代理；
 - Antigravity IDE 附带配套插件：状态栏代理状态、可视化设置、实时日志、出口 IP/Gemini 检测、插件自更新，IDE 更新后自动恢复补丁。
 
-## 赞助商
-
-> 📣 **广告位招租**：本 README 长期开放广告位，面向代理 IP / 云服务 / 开发工具等同类产品，支持「图片 + 跳转链接 + 短文案」，按月投放。合作请联系微信 **`JavaRookie666`**（优先，回复最快），或 Telegram [@yuaotian](https://t.me/yuaotian)。
-
-<table>
-  <tr>
-    <td align="center" colspan="2">
-      <a href="https://www.ipwo.net/?ref=githubantigravityproxy">
-        <img src="img/ad/ipwo.jpg" alt="IPWO 住宅代理 — 195+ 地区，9000 万+ 活跃住宅 IP" width="100%"/>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2">
-      <b>IPWO 住宅代理</b>覆盖 195+ 个国家和地区，拥有 9000 万+ 活跃住宅 IP 资源，支持动态住宅、静态住宅及不限量代理。<br/>
-      适用于跨境电商、海外社媒运营、SEO 监控、广告验证及数据采集等场景，为全球业务提供灵活的网络连接方案。
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">💡 <b>静态 IP 低至 9.9</b></td>
-    <td align="center" width="50%">🎟️ 优惠折扣码 <code>0200</code>（立减 10%）</td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <a href="https://www.ipwo.net/?ref=githubantigravityproxy"><b>👉 立即前往 IPWO 选购</b></a>
-    </td>
-  </tr>
-</table>
-
-<!-- 广告投放期：2026-11-09 ~ 2026-12-09（仅源码可见，不渲染） -->
-
 ## 安装
 
 ### 方式一：Antigravity IDE 插件市场（推荐）
@@ -279,66 +248,7 @@ Antigravity 自动更新可能会删除安装目录里的补丁文件：
 
 需要 Visual Studio 2022（C++ 桌面开发）与 CMake，执行 `.\build.ps1` 即可在 `output/` 得到全部产物。详见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)。
 
-## 许可证
+## 许可证与致谢
 
-[BSD-2-Clause](LICENSE.txt)。MinHook 部分版权归 Tsuda Kageyu 所有（`AUTHORS.txt` 为 MinHook 作者名单）。
-
-## 关于作者
-
-**煎饼果子（86）**，独立开发者。
-
-| 平台 | 信息 |
-|------|------|
-| **微信** | JavaRookie666 |
-| **Telegram** | [@yuaotian](https://t.me/yuaotian) |
-| **GitHub** | [@yuaotian](https://github.com/yuaotian) |
-
-如果这个项目对你有帮助，欢迎点个 ⭐、分享给需要的朋友，或提交 Issue / PR。
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="img/wx_add_qr.png" alt="微信二维码" width="200"/><br/>
-      <sub>添加微信交流</sub>
-    </td>
-    <td align="center">
-      <img src="img/wx_gzh_qr.jpg" alt="公众号二维码" width="200"/><br/>
-      <sub>关注公众号</sub>
-    </td>
-    <td align="center">
-      <img src="img/qun-23.jpg" alt="微信群二维码" width="200"/><br/>
-      <sub>🔥 加入微信交流群</sub>
-    </td>
-  </tr>
-</table>
-
-### 打赏支持
-
-如果这个项目帮到了你，可以请作者喝杯咖啡 ☕
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="img/wx_zsm.jpg" alt="微信赞赏码" width="200"/><br/>
-      <sub>微信赞赏</sub>
-    </td>
-    <td align="center">
-      <img src="img/zfb.png" alt="支付宝收款码" width="200"/><br/>
-      <sub>支付宝打赏</sub>
-    </td>
-  </tr>
-</table>
-
-## 伪代码（pseudocode_dll）来源说明
-
-`pseudocode_dll/` 收录了对某论坛帖中发布的 DLL 反编译得到的伪代码（Binary Ninja / IDA Hex-Rays），仅用于排查 Windows 11 下的崩溃问题与学习对照：
-
-- 不参与本项目的构建与发布；本项目代码为从零实现并持续维护，并非原 DLL 的源码；
-- 本仓库不分发原帖中的 DLL，如需获取请前往原帖：https://linux.do/t/topic/1189424；
-- 若原帖作者希望移除相关内容，请提 Issue，我会第一时间配合。
-
----
-
-<p align="center">
-  <sub>Made with ❤️ by 煎饼果子（86）</sub>
-</p>
+- 遵循 [BSD-2-Clause](LICENSE.txt) 开源协议；MinHook 部分版权归 Tsuda Kageyu 所有（详见 [AUTHORS.txt](AUTHORS.txt)）。
+- 本项目基于开源项目 [yuaotian/antigravity-proxy](https://github.com/yuaotian/antigravity-proxy) 二次开发，新增自动跟随 Windows 系统代理、混合端口协议探测及一键部署修复脚本。

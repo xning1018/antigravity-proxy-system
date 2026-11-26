@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="img/antigravity_logo.png" alt="Логотип Antigravity" width="120"/>
-</p>
-
-<h1 align="center">Antigravity-Proxy</h1>
+<h1 align="center">Antigravity-Proxy (System Proxy Auto-Follow Edition)</h1>
 
 <p align="center">
   <b>🚀 Стабильная работа Antigravity через прокси без режима TUN</b>
@@ -31,37 +27,6 @@ Antigravity-Proxy — это патч прокси (DLL), который нач�
 - поддерживает **Antigravity IDE**, **Antigravity** (настольная версия) и **Antigravity CLI** (`agy`);
 - проксирует Antigravity, используемый через ACP в **JetBrains / Zed / VS Code** и других редакторах (`agy acp` и `agy_acp_server` из ACP Registry);
 - для Antigravity IDE есть расширение: состояние прокси, визуальные настройки, живой журнал, проверка внешнего IP/Gemini, самообновление расширения и автоматическое восстановление патча после обновления IDE.
-
-## Спонсор
-
-> 📣 **Есть место для рекламы**: в этом README доступны платные размещения для прокси-IP, облачных сервисов и инструментов разработки — картинка + ссылка + короткий текст, оплата за месяц. Связаться: WeChat **`JavaRookie666`** (приоритетный канал) или Telegram [@yuaotian](https://t.me/yuaotian).
-
-<table>
-  <tr>
-    <td align="center" colspan="2">
-      <a href="https://www.ipwo.net/?ref=githubantigravityproxy">
-        <img src="img/ad/ipwo.jpg" alt="Резидентные прокси IPWO — 195+ регионов, более 90 млн активных IP" width="100%"/>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2">
-      <b>Резидентные прокси IPWO</b> охватывают более 195 стран и регионов и располагают более 90 млн активных резидентных IP; доступны ротационные, статические и безлимитные тарифы.<br/>
-      Подходит для трансграничной электронной коммерции, работы в зарубежных соцсетях, SEO-мониторинга, проверки рекламы и сбора данных — гибкое сетевое подключение для глобального бизнеса.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">💡 <b>Статический IP от 9.9</b></td>
-    <td align="center" width="50%">🎟️ Промокод <code>0200</code> (скидка 10%)</td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <a href="https://www.ipwo.net/?ref=githubantigravityproxy"><b>👉 Перейти к выбору IPWO</b></a>
-    </td>
-  </tr>
-</table>
-
-<!-- Период размещения: 2026-11-09 ~ 2026-12-09 (только в исходнике, не отображается) -->
 
 ## Установка
 
@@ -282,64 +247,4 @@ Invoke-WebRequest "https://open-vsx.org/api/yuaotian/antigravity-proxy/2.6.3/fil
 
 ## Лицензия
 
-[BSD-2-Clause](LICENSE.txt). Авторские права на часть MinHook принадлежат Tsuda Kageyu (`AUTHORS.txt` — список авторов MinHook).
-
-## Об авторе
-
-**煎饼果子（86）**, независимый разработчик.
-
-| Платформа | Данные |
-|------|------|
-| **WeChat** | JavaRookie666 |
-| **Telegram** | [@yuaotian](https://t.me/yuaotian) |
-| **GitHub** | [@yuaotian](https://github.com/yuaotian) |
-
-Если проект вам помог, поставьте ⭐, поделитесь им с теми, кому он пригодится, или создайте Issue / PR.
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="img/wx_add_qr.png" alt="QR-код WeChat" width="200"/><br/>
-      <sub>Добавить в WeChat</sub>
-    </td>
-    <td align="center">
-      <img src="img/wx_gzh_qr.jpg" alt="QR-код официального аккаунта" width="200"/><br/>
-      <sub>Подписаться на официальный аккаунт</sub>
-    </td>
-    <td align="center">
-      <img src="img/qun-23.jpg" alt="QR-код группы WeChat" width="200"/><br/>
-      <sub>🔥 Вступить в группу WeChat</sub>
-    </td>
-  </tr>
-</table>
-
-### Поддержать автора
-
-Если проект вам помог, можете угостить автора кофе ☕
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="img/wx_zsm.jpg" alt="QR-код для пожертвования через WeChat" width="200"/><br/>
-      <sub>Пожертвование через WeChat</sub>
-    </td>
-    <td align="center">
-      <img src="img/zfb.png" alt="QR-код Alipay" width="200"/><br/>
-      <sub>Пожертвование через Alipay</sub>
-    </td>
-  </tr>
-</table>
-
-## Об источнике псевдокода (pseudocode_dll)
-
-`pseudocode_dll/` содержит псевдокод, полученный декомпиляцией DLL из сообщения на форуме (Binary Ninja / IDA Hex-Rays). Он нужен только для разбора сбоев в Windows 11 и для сравнения при изучении:
-
-- он не участвует в сборке и выпуске проекта; код проекта написан с нуля и поддерживается автором, это не исходный код оригинальной DLL;
-- репозиторий не распространяет DLL из исходного сообщения; чтобы её получить, перейдите в исходную тему: https://linux.do/t/topic/1189424;
-- если автор исходного сообщения хочет удалить эти материалы, создайте Issue — я сразу этим займусь.
-
----
-
-<p align="center">
-  <sub>Made with ❤️ by 煎饼果子（86）</sub>
-</p>
+[BSD-2-Clause](LICENSE.txt). Авторские права на часть MinHook принадлежат Tsuda Kageyu (`AUTHORS.txt` — список авторов MinHook). Основано на проекте [yuaotian/antigravity-proxy](https://github.com/yuaotian/antigravity-proxy) (см. [README_SYSTEM_PROXY.md](README_SYSTEM_PROXY.md)).

@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="img/antigravity_logo.png" alt="Antigravity Logo" width="120"/>
-</p>
-
-<h1 align="center">Antigravity-Proxy</h1>
+<h1 align="center">Antigravity-Proxy (System Proxy Auto-Follow Edition)</h1>
 
 <p align="center">
   <b>🚀 Run Antigravity through a proxy reliably, without TUN mode</b>
@@ -31,37 +27,6 @@ Antigravity-Proxy is a proxy patch (DLL) that works once you put it in the Antig
 - Supports **Antigravity IDE**, **Antigravity** (desktop) and **Antigravity CLI** (`agy`);
 - Proxies Antigravity used via ACP in **JetBrains / Zed / VS Code** and other editors (`agy acp` and `agy_acp_server` from the ACP Registry);
 - Antigravity IDE comes with a companion extension: proxy status, visual settings, live logs, egress IP/Gemini checks, extension self-update, and automatic patch restore after IDE updates.
-
-## Sponsor
-
-> 📣 **Ad space available**: this README takes paid placements for proxy IP / cloud / dev-tool products — image + link + short copy, booked by the month. Contact WeChat **`JavaRookie666`** (preferred, fastest reply) or Telegram [@yuaotian](https://t.me/yuaotian).
-
-<table>
-  <tr>
-    <td align="center" colspan="2">
-      <a href="https://www.ipwo.net/?ref=githubantigravityproxy">
-        <img src="img/ad/ipwo.jpg" alt="IPWO residential proxies — 195+ regions, 90M+ active residential IPs" width="100%"/>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2">
-      <b>IPWO residential proxies</b> cover 195+ countries and regions with 90M+ active residential IPs, offering rotating, static and unlimited proxy plans.<br/>
-      Built for cross-border e-commerce, overseas social media operations, SEO monitoring, ad verification and data collection — a flexible network layer for global business.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">💡 <b>Static IP from 9.9</b></td>
-    <td align="center" width="50%">🎟️ Promo code <code>0200</code> (10% off)</td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <a href="https://www.ipwo.net/?ref=githubantigravityproxy"><b>👉 Get IPWO residential proxies</b></a>
-    </td>
-  </tr>
-</table>
-
-<!-- Ad run: 2026-11-09 ~ 2026-12-09 (source only, not rendered) -->
 
 ## Installation
 
@@ -280,66 +245,7 @@ For more troubleshooting steps see [docs/troubleshooting.md](docs/troubleshootin
 
 Requires Visual Studio 2022 (Desktop development with C++) and CMake. Run `.\build.ps1` to get all build outputs in `output/`. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-## License
+## License & Attribution
 
-[BSD-2-Clause](LICENSE.txt). MinHook portions are copyright Tsuda Kageyu (`AUTHORS.txt` lists the MinHook authors).
-
-## About the Author
-
-**煎饼果子（86）**, independent developer.
-
-| Platform | Info |
-|------|------|
-| **WeChat** | JavaRookie666 |
-| **Telegram** | [@yuaotian](https://t.me/yuaotian) |
-| **GitHub** | [@yuaotian](https://github.com/yuaotian) |
-
-If this project helps you, feel free to give it a ⭐, share it with friends who need it, or submit an Issue / PR.
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="img/wx_add_qr.png" alt="WeChat QR Code" width="200"/><br/>
-      <sub>Add WeChat</sub>
-    </td>
-    <td align="center">
-      <img src="img/wx_gzh_qr.jpg" alt="Official Account QR Code" width="200"/><br/>
-      <sub>Official Account</sub>
-    </td>
-    <td align="center">
-      <img src="img/qun-23.jpg" alt="WeChat Group QR Code" width="200"/><br/>
-      <sub>🔥 Join WeChat Group</sub>
-    </td>
-  </tr>
-</table>
-
-### Donate
-
-If this project helped you, you can buy the author a coffee ☕
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="img/wx_zsm.jpg" alt="WeChat Reward QR Code" width="200"/><br/>
-      <sub>WeChat Reward</sub>
-    </td>
-    <td align="center">
-      <img src="img/zfb.png" alt="Alipay QR Code" width="200"/><br/>
-      <sub>Alipay</sub>
-    </td>
-  </tr>
-</table>
-
-## Pseudocode (pseudocode_dll) Source Note
-
-`pseudocode_dll/` contains pseudocode decompiled (Binary Ninja / IDA Hex-Rays) from a DLL published in a forum post. It is used only to investigate crashes on Windows 11 and for study and comparison:
-
-- It is not part of this project's build or release; this project's code is written from scratch and actively maintained, and is not the source code of the original DLL;
-- This repository does not distribute the DLL from the original post; to get it, go to the original post: https://linux.do/t/topic/1189424;
-- If the original author wants this content removed, please open an Issue and I will act on it right away.
-
----
-
-<p align="center">
-  <sub>Made with ❤️ by 煎饼果子（86）</sub>
-</p>
+- [BSD-2-Clause](LICENSE.txt). MinHook portions are copyright Tsuda Kageyu (`AUTHORS.txt` lists the MinHook authors).
+- Based on upstream [yuaotian/antigravity-proxy](https://github.com/yuaotian/antigravity-proxy), enhanced with automatic Windows system proxy following and mixed-port protocol probing (see [README_SYSTEM_PROXY.md](README_SYSTEM_PROXY.md)).
