@@ -67,7 +67,7 @@ function Files-Identical([string]$PathA, [string]$PathB) {
         $hB = (Get-FileHash -LiteralPath $PathB -Algorithm SHA256).Hash
         return $hA -eq $hB
     } catch {
-        return $true
+        return $false
     }
 }
 

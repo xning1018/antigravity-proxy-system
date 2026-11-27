@@ -7,6 +7,7 @@
 #include <cctype>
 #include <cstdint>
 #include <functional>
+#include <mutex>
 #include <shared_mutex>
 #include <string>
 #include <vector>
@@ -115,13 +116,15 @@ namespace Core {
             if (!ParseHostPortToken(raw, &host, &port)) return false;
 
             if (outScheme) {
-                if (scheme == "socks" || scheme == "socks5" || scheme == "socks5h" || scheme == "socks4") {
+                if (scheme == "socks" || scheme == "socks5" || scheme == "socks5h") {
                     *outScheme = "socks5";
                 } else if (scheme == "http" || scheme == "https") {
                     *outScheme = "http";
-                } else {
+                } else if (scheme.empty()) {
                     *outScheme = "socks5";
                     explicitScheme = false;
+                } else {
+                    return false;
                 }
             }
             if (outHost) *outHost = host;
@@ -200,7 +203,7 @@ namespace Core {
             if (!Detail::ParseSingleEndpoint(val, &scheme, &host, &port, &explicitScheme)) {
                 continue;
             }
-            if (key == "socks" || key == "socks5" || key == "socks4") {
+            if (key == "socks" || key == "socks5") {
                 candidates.push_back({3, "socks5", host, port, true});
             } else if (key == "https") {
                 candidates.push_back({2, "http", host, port, true});
@@ -226,10 +229,11 @@ namespace Core {
         return res;
     }
 
-    inline bool ReadWindowsInternetSettingsProxy(bool* outEnable, std::string* outServer) {
+    inline bool ReadWindowsInternetSettingsProxy(bool* outEnable, std::string* outServer, std::string* outAutoConfigUrl = nullptr) {
         if (!outEnable || !outServer) return false;
         *outEnable = false;
         outServer->clear();
+        if (outAutoConfigUrl) outAutoConfigUrl->clear();
 
         HKEY hKey = nullptr;
         const wchar_t* subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
@@ -256,6 +260,18 @@ namespace Core {
             *outServer = Detail::WideToUtf8Simple(std::wstring(serverBuf));
         }
 
+        if (outAutoConfigUrl) {
+            wchar_t pacBuf[1024] = {0};
+            DWORD pacSize = sizeof(pacBuf) - sizeof(wchar_t);
+            DWORD pacType = 0;
+            if (RegQueryValueExW(hKey, L"AutoConfigURL", nullptr, &pacType,
+                                 reinterpret_cast<LPBYTE>(pacBuf), &pacSize) == ERROR_SUCCESS &&
+                (pacType == REG_SZ || pacType == REG_EXPAND_SZ)) {
+                pacBuf[(sizeof(pacBuf) / sizeof(wchar_t)) - 1] = L'\0';
+                *outAutoConfigUrl = Detail::TrimAscii(Detail::WideToUtf8Simple(std::wstring(pacBuf)));
+            }
+        }
+
         RegCloseKey(hKey);
         return true;
     }
@@ -266,11 +282,13 @@ namespace Core {
     class SystemProxyTracker {
     private:
         mutable std::shared_mutex m_mtx;
+        mutable std::mutex m_probeMtx;
         ULONGLONG m_lastCheckTick = 0;
         ULONGLONG m_lastProbeTick = 0;
         bool m_initialized = false;
         bool m_lastEnable = false;
         std::string m_lastRawServer;
+        std::string m_lastAutoConfigUrl;
         ResolvedSystemProxy m_cached;
         ProxyProtocolProbeFn m_probeFn = nullptr;
         static constexpr ULONGLONG kRefreshIntervalMs = 2000;
@@ -281,11 +299,25 @@ namespace Core {
             m_probeFn = fn;
         }
 
+        // 单元测试辅助：直接注入模拟的系统代理状态，避免依赖本机注册表
+        void SetStateForTest(bool enable, const std::string& server) {
+            ResolvedSystemProxy parsed = ParseWindowsProxyServerString(enable, server);
+            std::unique_lock<std::shared_mutex> lock(m_mtx);
+            m_initialized = true;
+            m_lastCheckTick = GetTickCount64();
+            m_lastProbeTick = 0;
+            m_lastEnable = enable;
+            m_lastRawServer = server;
+            m_lastAutoConfigUrl.clear();
+            m_cached = parsed;
+        }
+
         // 在 DllMain 等安全阶段仅读取注册表（绝不发起 Socket 探测）
         ResolvedSystemProxy LoadInitialFromRegistry() {
             bool enable = false;
             std::string server;
-            ReadWindowsInternetSettingsProxy(&enable, &server);
+            std::string autoConfigUrl;
+            ReadWindowsInternetSettingsProxy(&enable, &server, &autoConfigUrl);
             ResolvedSystemProxy parsed = ParseWindowsProxyServerString(enable, server);
 
             std::unique_lock<std::shared_mutex> lock(m_mtx);
@@ -294,7 +326,12 @@ namespace Core {
             m_lastProbeTick = 0;
             m_lastEnable = enable;
             m_lastRawServer = server;
+            m_lastAutoConfigUrl = autoConfigUrl;
             m_cached = parsed;
+            if ((!m_cached.enabled || m_cached.port == 0) && !autoConfigUrl.empty()) {
+                Logger::Warn("[SystemProxy] 检测到 Windows PAC 自动代理脚本 (" + autoConfigUrl +
+                             ")，当前仅支持系统代理（全局/规则）模式；如需自动跟随请开启系统代理");
+            }
             return m_cached;
         }
 
@@ -312,35 +349,62 @@ namespace Core {
                 }
             }
 
+            // 串行化注册表同步与首次协议探测，避免启动高并发阶段其他线程拿到未探测的默认 socks5 类型
+            std::lock_guard<std::mutex> probeGuard(m_probeMtx);
+            const ULONGLONG nowLocked = GetTickCount64();
+            bool dueCheck = false;
+            {
+                std::shared_lock<std::shared_mutex> lock(m_mtx);
+                dueCheck = !m_initialized || (nowLocked - m_lastCheckTick) >= kRefreshIntervalMs;
+                const bool dueProbe = allowProbe && m_cached.enabled && m_cached.port > 0 &&
+                                      m_cached.needsProbe && m_probeFn != nullptr &&
+                                      (m_lastProbeTick == 0 || (nowLocked - m_lastProbeTick) >= kRefreshIntervalMs);
+                if (!dueCheck && !dueProbe) {
+                    return m_cached;
+                }
+            }
+
             bool enable = false;
             std::string server;
-            ReadWindowsInternetSettingsProxy(&enable, &server);
+            std::string autoConfigUrl;
+            if (dueCheck) {
+                ReadWindowsInternetSettingsProxy(&enable, &server, &autoConfigUrl);
+            }
 
             ProxyProtocolProbeFn probeFnCopy = nullptr;
             bool needProbe = false;
             ResolvedSystemProxy candidate;
             {
                 std::unique_lock<std::shared_mutex> lock(m_mtx);
-                m_lastCheckTick = now;
                 probeFnCopy = m_probeFn;
-                const bool changed = (!m_initialized || enable != m_lastEnable || server != m_lastRawServer);
-                if (changed) {
-                    m_initialized = true;
-                    m_lastEnable = enable;
-                    m_lastRawServer = server;
-                    m_lastProbeTick = 0;
-                    m_cached = ParseWindowsProxyServerString(enable, server);
+                if (dueCheck) {
+                    m_lastCheckTick = nowLocked;
+                    const bool changed = (!m_initialized || enable != m_lastEnable ||
+                                          server != m_lastRawServer || autoConfigUrl != m_lastAutoConfigUrl);
+                    if (changed) {
+                        m_initialized = true;
+                        m_lastEnable = enable;
+                        m_lastRawServer = server;
+                        m_lastAutoConfigUrl = autoConfigUrl;
+                        m_lastProbeTick = 0;
+                        m_cached = ParseWindowsProxyServerString(enable, server);
 
-                    if (!m_cached.enabled || m_cached.port == 0) {
-                        Logger::Info("[SystemProxy] Windows 系统代理未开启，已切换为直连模式");
-                    } else if (!m_cached.needsProbe) {
-                        Logger::Info("[SystemProxy] 已同步系统代理: " + m_cached.type + "://" +
-                                     m_cached.host + ":" + std::to_string(m_cached.port));
+                        if (!m_cached.enabled || m_cached.port == 0) {
+                            if (!autoConfigUrl.empty()) {
+                                Logger::Warn("[SystemProxy] 检测到 PAC 自动代理脚本 (" + autoConfigUrl +
+                                             ")，未开启 ProxyEnable，当前走直连模式");
+                            } else {
+                                Logger::Info("[SystemProxy] Windows 系统代理未开启，已切换为直连模式");
+                            }
+                        } else if (!m_cached.needsProbe) {
+                            Logger::Info("[SystemProxy] 已同步系统代理: " + m_cached.type + "://" +
+                                         m_cached.host + ":" + std::to_string(m_cached.port));
+                        }
                     }
                 }
                 if (allowProbe && m_cached.enabled && m_cached.port > 0 && m_cached.needsProbe && probeFnCopy != nullptr &&
-                    (m_lastProbeTick == 0 || (now - m_lastProbeTick) >= kRefreshIntervalMs)) {
-                    m_lastProbeTick = now;
+                    (m_lastProbeTick == 0 || (nowLocked - m_lastProbeTick) >= kRefreshIntervalMs)) {
+                    m_lastProbeTick = nowLocked;
                     candidate = m_cached;
                     needProbe = true;
                 }
@@ -356,7 +420,7 @@ namespace Core {
                         Logger::Info("[SystemProxy] 混合端口协议探测成功: " + m_cached.type + "://" +
                                      m_cached.host + ":" + std::to_string(m_cached.port));
                     } else {
-                        Logger::Warn("[SystemProxy] 系统代理端口暂不可达 (" + m_cached.host + ":" +
+                        Logger::Warn("[SystemProxy] 系统代理端口暂不可达或探测超时 (" + m_cached.host + ":" +
                                      std::to_string(m_cached.port) + ")，将继续重试探测");
                     }
                 }

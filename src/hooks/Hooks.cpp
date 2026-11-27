@@ -186,6 +186,7 @@ struct ConnectExContext {
     DWORD sendLen;
     LPDWORD bytesSent;
     bool isUdp = false;      // 是否为 UDP ConnectEx（用于 QUIC/HTTP3 的透明代理）
+    Core::ProxyConfig proxy; // 建连时快照的代理配置，防止异步期间系统代理切换导致握手协议错配
     ULONGLONG createdTick; // 记录创建时间，便于清理超时上下文
 };
 
@@ -337,24 +338,71 @@ static std::string ProbeLocalProxyProtocol(const std::string& host, int port) {
         // 已建立 TCP 连接：设为阻塞模式+短超时，发 3 字节 SOCKS5 greeting 探测协议
         u_long blk = 0;
         ioctlsocket(s, FIONBIO, &blk);
-        int timeoutMs = 180;
+        int timeoutMs = 300;
         setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
         setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
 
         const char greeting[3] = {0x05, 0x01, 0x00};
         if (rawSend(s, greeting, 3, 0) == 3) {
-            char resp[2] = {0, 0};
-            const int n = rawRecv(s, resp, 2, 0);
+            char resp[8] = {0};
+            const int n = rawRecv(s, resp, sizeof(resp), 0);
             if (n >= 2 && static_cast<unsigned char>(resp[0]) == 0x05) {
                 detected = "socks5";
-            } else {
+            } else if (n > 0) {
+                // 收到明确的非 SOCKS5 响应（如 HTTP/1.x 400），判定为 HTTP 代理
                 detected = "http";
+            } else {
+                // n == 0（对端主动断开）或 n < 0（如超时 WSAETIMEDOUT）：
+                // 绝不武断判为 http；尝试发送轻量 HTTP 探针二次确认，避免将慢响应的 SOCKS5 永久锁死为 http
+                const int recvErr = (n < 0) ? WSAGetLastError() : 0;
+                rawClose(s);
+                s = INVALID_SOCKET;
+                if (n == 0 || recvErr == WSAECONNRESET) {
+                    SOCKET hs = rawSocket(it->ai_family, it->ai_socktype, it->ai_protocol);
+                    if (hs != INVALID_SOCKET) {
+                        u_long hnb = 1;
+                        ioctlsocket(hs, FIONBIO, &hnb);
+                        int hrc = rawConnect(hs, it->ai_addr, static_cast<int>(it->ai_addrlen));
+                        bool hconn = (hrc == 0);
+                        if (!hconn && WSAGetLastError() == WSAEWOULDBLOCK) {
+                            fd_set hset;
+                            FD_ZERO(&hset);
+                            FD_SET(hs, &hset);
+                            timeval htv{};
+                            htv.tv_sec = 0;
+                            htv.tv_usec = 180000;
+                            if (select(0, nullptr, &hset, nullptr, &htv) > 0) {
+                                int hErr = 0;
+                                int hLen = sizeof(hErr);
+                                if (getsockopt(hs, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&hErr), &hLen) == 0 && hErr == 0) {
+                                    hconn = true;
+                                }
+                            }
+                        }
+                        if (hconn) {
+                            u_long hblk = 0;
+                            ioctlsocket(hs, FIONBIO, &hblk);
+                            setsockopt(hs, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
+                            setsockopt(hs, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
+                            const char* httpProbe = "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
+                            const int probeLen = static_cast<int>(strlen(httpProbe));
+                            if (rawSend(hs, httpProbe, probeLen, 0) == probeLen) {
+                                char hresp[8] = {0};
+                                const int hn = rawRecv(hs, hresp, sizeof(hresp), 0);
+                                if (hn >= 5 && memcmp(hresp, "HTTP/", 5) == 0) {
+                                    detected = "http";
+                                }
+                            }
+                        }
+                        rawClose(hs);
+                    }
+                }
             }
-        } else {
-            detected = "http";
         }
         rawClose(s);
-        break;
+        if (!detected.empty()) {
+            break;
+        }
     }
 
     freeaddrinfo(res);
@@ -2145,7 +2193,7 @@ static const sockaddr* ResolveDirectTarget(const sockaddr* name, int namelen, co
     return name;
 }
 
-static bool DoProxyHandshake(SOCKET s, const std::string& host, uint16_t port) {
+static bool DoProxyHandshake(SOCKET s, const std::string& host, uint16_t port, const Core::ProxyConfig& proxy) {
     // FIX-2: 预检确保 socket 已成功连接到代理服务器，避免在未连接的 socket 上发送数据
     sockaddr_storage peerAddr{};
     int peerLen = sizeof(peerAddr);
@@ -2159,7 +2207,6 @@ static bool DoProxyHandshake(SOCKET s, const std::string& host, uint16_t port) {
     }
 
     auto& config = Core::Config::Instance();
-    const auto proxy = config.GetEffectiveProxy(false);
     // 握手预算采用 connect/send/recv 的总和，避免多阶段各自完整超时导致整体阻塞过长
     int handshakeBudgetMs = config.timeout.connect_ms + config.timeout.send_ms + config.timeout.recv_ms;
     if (handshakeBudgetMs <= 0) {
@@ -2305,8 +2352,8 @@ static bool HandleConnectExCompletion(LPOVERLAPPED ovl, DWORD* outSentBytes) {
         return true;
     }
 
-    // TCP ConnectEx：保持原逻辑（先握手，再可选发送首包）
-    if (!DoProxyHandshake(ctx.sock, ctx.host, ctx.port)) {
+    // TCP ConnectEx：使用建连时快照的代理配置执行握手，再可选发送首包
+    if (!DoProxyHandshake(ctx.sock, ctx.host, ctx.port, ctx.proxy)) {
         return false;
     }
     if (ctx.sendBuf && ctx.sendLen > 0) {
@@ -2909,7 +2956,7 @@ int PerformProxyConnect(SOCKET s, const struct sockaddr* name, int namelen, bool
             }
         }
         
-        if (!DoProxyHandshake(s, originalHost, originalPort)) {
+        if (!DoProxyHandshake(s, originalHost, originalPort, proxy)) {
             return SOCKET_ERROR;
         }
         
@@ -3741,6 +3788,7 @@ BOOL PASCAL DetourConnectEx(
                 ctx.sendBuf = (const char*)lpSendBuffer;
                 ctx.sendLen = dwSendDataLength;
                 ctx.bytesSent = lpdwBytesSent;
+                ctx.proxy = proxy;
                 SaveConnectExContext(lpOverlapped, ctx);
             } else {
                 Core::Logger::Info("ConnectEx 返回 WSA_IO_PENDING 但未提供 Overlapped, sock=" + std::to_string((unsigned long long)s) +
@@ -3758,7 +3806,7 @@ BOOL PASCAL DetourConnectEx(
     if (!UpdateConnectExContext(s)) {
         return FALSE;
     }
-    if (!DoProxyHandshake(s, originalHost, originalPort)) {
+    if (!DoProxyHandshake(s, originalHost, originalPort, proxy)) {
         return FALSE;
     }
     
